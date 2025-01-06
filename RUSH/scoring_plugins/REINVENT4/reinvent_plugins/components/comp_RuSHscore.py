@@ -34,7 +34,6 @@ class Parameters(BaseParameters):
     max_molwt      : List[int] = 500
     max_rotors     : List[int] = 10
     
-    ROCS_version   : List[str] = '2024'
     roc_maxconfs   : List[int] = 100
     roc_besthits   : List[int] = 500
     roc_timeout    : List[int] = 1000
