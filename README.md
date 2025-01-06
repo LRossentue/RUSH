@@ -56,7 +56,7 @@ SF = ScaffoldFinder(reference_decorations=decorations, name_mols=True)
 SF.process_molecules(mols)
 ```
 
-RuSH
+RuSH (REINVENT4)
 ```javascript
 from RUSH.scoring_plugins.REINVENT4.reinvent_plugins.components.comp_RuSHscore import RuSHScore, Parameters
 
@@ -94,25 +94,20 @@ The parameterspace below is identical in the standalone script (RuSH.py) and REI
 | `database_from_smiles` | `bool` | If reference poses should be generated (with OMEGA) from SMILES instead. |
 | `reference_smiles` | `list` | List of reference molecule tuples to 'hop' from. In the order of [(mol, (fragments), linker),]. |
 | `database_path` | `string` | Path to conformer database (SDF or OEB) to use as reference poses in ROCS. |
-
 | `partial_reward` | `float` | Reward given if some, but not all decorations are correctly included in the scored design. |
 | `allowance` | `float` | Allowance permits fuzzy fragment identification if <1.0. Formulated as the permitted ratio of number of atoms between the identified decoration and the specified reference decoration. |
 | `oeomega_CA` | `string` | See https://docs.eyesopen.com/applications/omega/omega/omega_opt_params.html |
 | `oeomega_rms` | `float` | - |
 | `n_conformers` | `int` | - |
-
 | `max_centers` | `int` | Filter parameter. Molecules above threshold are not scored. |
 | `max_molwt` | `int` | Filter parameter. Molecules above threshold are not scored. |
 | `max_rotors` | `int` | Filter parameter. Molecules above threshold are not scored. |
-
 | `roc_maxconfs` | `int` | See https://docs.eyesopen.com/applications/rocs/rocs/rocs_opt_params.html |
 | `roc_besthits` | `int` | - |
 | `score_cutoff` | `float` | - |
 | `roc_timeout` | `int` | Time limit in seconds before ROCS subroutine raises a TimeoutError. |
-
 | `mcquery` | `string` | Set to False if you want to fetch individual conformer hits. |
 | `nostructs` | `string` | Set to False for ROCS to also write poses to a file for visual inspection/further handling. |
-
 | `shape_weight` | `float` | Weight to scale the Shape scoring in ROCS. |
 | `color_weight` | `float` | Weight to scale the Color scoring in ROCS. |
 | `jacc_weight` | `float` | Weight to scale the Jaccard distance scoring (as Harmonic mean). |
