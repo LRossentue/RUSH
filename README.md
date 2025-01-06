@@ -149,4 +149,4 @@ or consult https://docs.eyesopen.com/applications/common/license.html.
 
 ## Authors
 
-- [@username](https://github.com/LRossentue)
+- [@LRossentue](https://github.com/LRossentue)
