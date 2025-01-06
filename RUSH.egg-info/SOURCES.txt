@@ -1,0 +1,5 @@
+setup.py
+RUSH.egg-info/PKG-INFO
+RUSH.egg-info/SOURCES.txt
+RUSH.egg-info/dependency_links.txt
+RUSH.egg-info/top_level.txt

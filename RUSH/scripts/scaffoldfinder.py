@@ -36,6 +36,7 @@ Luke Rossen, Novartis, October 2024.
 """
 
 import re
+import os
 import numpy as np
 import pandas as pd
 
@@ -50,27 +51,35 @@ from rdkit.Chem.MolStandardize import rdMolStandardize
 from rdkit.Chem.rdmolops import GetMolFrags, AddHs, FragmentOnBonds
 from rdkit.Chem.rdFMCS import BondCompare, AtomCompare, RingCompare
 
-import os, sys, time
-import argparse
+from typing import List, Tuple
 
 
 class ScaffoldFinder():
-    def __init__(self, molecules, reference_decorations, allowance=0.9, output_dir='', name_mols=True):
-        self.output_file              = output_dir + 'linkers.csv' # cd by default.
-        self.allowance                = allowance
-        # molecules must have a _Name prop for identification. An additional check for mol is done.
-        # because sometimes .sdf write>read fails and returns a None object instead of an rdkit mol. 
-        self.molecules  = molecules
-        if name_mols: self._name_mols()
+    def __init__(self, 
+                 reference_decorations : List[Tuple[Chem.Mol]], 
+                 allowance : float = 0.9, 
+                 output_dir : str = os.getcwd(), 
+                 name_mols : bool = False, 
+                 write_results: bool = False, **kwds):
+        
+        self.output_file = os.path.join(output_dir, 'linkers.csv') # cd by default.
+        self.allowance  = allowance      
         self.reference_decorations = reference_decorations
-            
-    def process_molecules(self):
+        self.name_mols = name_mols
+        self.write_results = write_results
+    
+    def __call__(self, *args) -> pd.DataFrame:
+        return self.process_molecules(*args)
+    
+    def process_molecules(self, molecules: List[Chem.Mol], names: List[str] = None) -> pd.DataFrame:
         # for each molecule, attempt to retrieve a scaffold by identifying and removing a set of reference decorations.
         # return (and write) all results to an output df/csv. 
         results_df = pd.DataFrame(columns=['ID', 'molecule', 'scaffold', 'scaffold_success', 
                                            'reference_ID', 'indices_scaffold', 'indices_decorations'])
         
-        for i, mol in enumerate(self.molecules):
+        if self.name_mols: self._name_mols(molecules, names)
+        
+        for i, mol in enumerate(molecules):
             for j, decorations in enumerate(self.reference_decorations):
                 # attempt to obtain a scaffold by identifying and removing the decorations. 
                 scaffold_success, scaffold, indices_dict = self._obtain_scaffold(mol, decorations)   
@@ -81,14 +90,17 @@ class ScaffoldFinder():
             results_df.loc[i] = [mol.GetProp("_Name"), Chem.MolToSmiles(mol), Chem.MolToSmiles(scaffold),
                                  scaffold_success, f"db_{j}", indices_dict['scaffold'], indices_dict['decorations']]
         
-        results_df.to_csv(self.output_file)
-
+        if self.write_results: results_df.to_csv(self.output_file)
         return results_df 
     
-    def _name_mols(self, names: List[str] = None):
-        """Add _Name props to a list of RDKit molecules. Enumerates by default if no names are passed."""
-        if not names: names = [f"Mol_{_}" for _ in range(len(self.molecules))]
-        [mol.SetProp("_Name", name) for mol, name in zip(self.molecules, names)]
+    def _name_mols(self, molecules: List[Chem.Mol], names: List[str] = None) -> None:
+        """
+        Add _Name props to a list of RDKit molecules. 
+        Enumerates by default if no names are passed.
+        inplace operation.
+        """
+        if not names: names = [f"Mol_{_}" for _ in range(len(molecules))]
+        [mol.SetProp("_Name", name) for mol, name in zip(molecules, names)]
         return None
         
     
@@ -329,16 +341,6 @@ class ScaffoldFinder():
                 atom.SetNumExplicitHs(hcount - chg)
                 atom.UpdatePropertyCache()
         return mol
-    
-    
-    def _fetch_indices(self, indices_dict):
-        # utility method for readability. Returns the right indices from a dict using self.score_shape_by.
-        # effectively returns indices_dict[mol] - indices_dict[keep].
-        return {"mol": [],
-                "decorations": indices_dict["scaffold"],
-                "scaffold": indices_dict["decorations"],
-        }[self.score_shape_by]
-
 
     def _walk_neighbors(self, mol, false_indices, begin_atom, walked = None, counted = None):
         # method to recursively count the number of atoms past a certain begin atom, ... 

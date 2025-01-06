@@ -9,7 +9,7 @@ import logging
 logger = logging.getLogger("reinvent")
 cache = {}
 
-# QoL improvements to REINVENT for scoring plugins.
+# QoL additions to REINVENT for scoring plugins.
 
 @dataclass
 class BaseParameters:
@@ -62,7 +62,7 @@ class BaseParameters:
 
 """
 Copy pasta from https://github.com/MolecularAI/REINVENT4/tree/main/reinvent_plugins 
-So we don't have to deal with relative imports if using components outside of reinvent loop.
+So we don't need to deal with relative import issues if using components outside of the main reinvent loop.
 """
 
 def molcache(func: Callable):
