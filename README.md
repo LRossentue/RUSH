@@ -36,6 +36,7 @@ conda env create -f rush.yml
 
 ## Usage
 
+ScaffoldFinder
 ```javascript
 from RUSH.scripts.scaffoldfinder import ScaffoldFinder
 from rdkit import Chem
@@ -53,6 +54,32 @@ decorations = [tuple(Chem.MolFromSmiles(f) for f in reference_decoration_tuple) 
 
 SF = ScaffoldFinder(reference_decorations=decorations, name_mols=True)
 SF.process_molecules(mols)
+```
+
+RuSH
+```javascript
+from RUSH.scoring_plugins.REINVENT4.reinvent_plugins.components.comp_RuSHscore import RuSHScore, Parameters
+
+reference_mols = ['CC1CC(N)CC(c2ccncc2NC(=O)c2ccc(F)c(-c3c(F)cccc3F)n2)C1'] #pim447
+reference_decorations = [('*c1cnccc1C1CC(C)CC(N)C1', '*c1c(F)cccc1F'),]
+reference_scaffolds = [ "O=C(N[*])c1nc([*])c(F)cc1" ]
+
+parameters = Parameters(database_from_smiles=[True, False],
+                        reference_smiles=[list(zip(reference_mols, reference_decorations, reference_scaffolds)),],
+                        database_path=f"{RUSH}/data/PDB_structures/pim447.sdf",
+                        output_dir=f"{RUSH}",
+                        allowance=0.9)
+
+scorer = RuSHScore(parameters)
+
+smiles = [
+    "CCC(O)CCCCNCO",
+    "CCCc1ccccc1CNCO",
+    "CC1CCCCC1NCO",
+    "C1CCC2CCC1NC2O",
+]
+
+scores = scorer(smiles)
 ```
 
 ## REINVENT4 Scoring Component Reference
