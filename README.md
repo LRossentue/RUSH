@@ -1,7 +1,7 @@
 # RuSH
 ## Scaffold Hopping with Generative Reinforcement Learning
 
-This repository contains the code to reproduce the transfer learning, reinforcement learning, and baseline experiments published in our work 'Scaffold Hopping with Generative Reinforcement Learning'. This repository further contains scoring plugins for RUSH adapted for REINVENT3.2 and REINVENT4, as well as standalone scripts to use our ScaffoldFinder and RuSHScorer algorithms. 
+This repository contains the code to reproduce the transfer learning (RE_TL), reinforcement learning (RE_RL), and baseline experiments (DL, LI_RL, LI_SF) published in our work 'Scaffold Hopping with Generative Reinforcement Learning'. This repository further contains two RuSH scoring plugins adapted for REINVENT3.2 (Link-INVENT) and REINVENT4, as well as standalone scripts to use our ScaffoldFinder and RuSH algorithms. 
 
 A pre-print of the publication is available at:
 
@@ -9,9 +9,14 @@ Rossen L, Sirockin F, Schneider N, Grisoni F. Scaffold Hopping with Generative R
 
 ## Features
 
-- Notebooks for reproducing experiments. An example for PIM1 is provided for all published results.
-- Scoring plugins for REINVENT 3.2 and 4.
-- Standalone scripts for using RuSH and ScaffoldFinder.
+- Notebooks for reproducing experiments. An example for PIM1 is provided for all published results under ~/RUSH/notebooks.
+- Input data for reproducing experiments. Reference structures are obtained from PDB (See Fig. 3) and provided under ~/RUSH/data.
+- Scoring plugins for REINVENT 3.2 and 4 are provided under ~/RUSH/scoring_plugins.
+- Standalone scripts for using RuSH and ScaffoldFinder are provided under ~/RUSH/scripts.
+
+## Demo
+
+A notebook (~/RUSH/using_scaffoldfinder.ipynb) is provided to demonstrate ScaffoldFinder/RuSH using the PIM1 case study as an example. We provide a semi-curated list of known PIM1 inhibitors (~/RUSH/data/PIM1_CHEMBL2147_ligands.csv) retrieved with the ChEMBL REST API for demonstration only.
 
 ## Installation
 
@@ -32,7 +37,7 @@ follow REINVENT4 instructions, or
 conda env create -f rush.yml
 ```
 
-* If copying, one must also update the import statement and enumerations where applicable.
+* *If copying, one must also update the import statement and enumerations where applicable.
 
 ## Usage
 
@@ -64,6 +69,7 @@ reference_mols = ['CC1CC(N)CC(c2ccncc2NC(=O)c2ccc(F)c(-c3c(F)cccc3F)n2)C1'] #pim
 reference_decorations = [('*c1cnccc1C1CC(C)CC(N)C1', '*c1c(F)cccc1F'),]
 reference_scaffolds = [ "O=C(N[*])c1nc([*])c(F)cc1" ]
 
+# 2 endpoints
 parameters = Parameters(database_from_smiles=[True, False],
                         reference_smiles=[list(zip(reference_mols, reference_decorations, reference_scaffolds)),],
                         database_path=f"{RUSH}/data/PDB_structures/pim447.sdf",
@@ -119,7 +125,17 @@ Returns: ComponentResults(scores)
 
 ## ScaffoldFinder
 
+### RuSHScore(Parameters)
 
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `reference_decorations` | `list` | List of tuples containing sets of reference decoration to identify. In the order of List[Tuple[Chem.Mol]]. |
+| `allowance` | `float` | Allowance permits fuzzy fragment identification if <1.0. Formulated as the permitted ratio of number of atoms 
+| `output_dir` | `string` | Where results (csv) is written if write_results. |
+| `name_mols` | `bool` | If molecules should be named by ScaffoldFinder during call. Named molecules are required for processing. |
+| `name_mols` | `bool` | If results should also be written to a formatted (csv) file during call. |
+
+Returns: pd.DataFrame
 
 ## OpenEye License
 
@@ -127,9 +143,9 @@ For using RuSH, an OpenEye software license is required:
 ```bash
 #!/bin/sh
 export OE_LICENSE='</path/to/your/oe_license/file>'
-or, 
-https://docs.eyesopen.com/applications/common/license.html
 ```
+or consult https://docs.eyesopen.com/applications/common/license.html.
+
 
 ## Authors
 
