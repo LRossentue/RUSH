@@ -8,14 +8,14 @@ A pre-print of the publication is available at:
 
 ## Features
 
-- Notebooks for reproducing experiments. An example for PIM1 is provided for all published results under ~/RUSH/notebooks.
-- Input data for reproducing experiments. Reference structures are obtained from PDB (See Fig. 3) and provided under ~/RUSH/data.
-- Scoring plugins for REINVENT 3.2 and 4 are provided under ~/RUSH/scoring_plugins.
-- Standalone scripts for using RuSH and ScaffoldFinder are provided under ~/RUSH/scripts.
+- Notebooks for reproducing experiments. An example for PIM1 is provided for all published results under RUSH/notebooks.
+- Input data for reproducing experiments. Reference structures are obtained from PDB (See Fig. 3) and provided under RUSH/data.
+- Scoring plugins for REINVENT 3.2 and 4 are provided under RUSH/scoring_plugins.
+- Standalone scripts for using RuSH and ScaffoldFinder are provided under RUSH/scripts.
 
 ## Demo
 
-A notebook (~/RUSH/using_scaffoldfinder.ipynb) is provided to demonstrate ScaffoldFinder/RuSH using the PIM1 case study as an example. We provide a semi-curated list of known PIM1 inhibitors (~/RUSH/data/PIM1_CHEMBL2147_ligands.csv) retrieved with the ChEMBL REST API for demonstration only.
+A notebook (RUSH/using_scaffoldfinder.ipynb) is provided to demonstrate ScaffoldFinder/RuSH using the PIM1 case study as an example. We provide a semi-curated list of known PIM1 inhibitors (RUSH/data/PIM1_CHEMBL2147_ligands.csv) retrieved with the ChEMBL REST API for demonstration only.
 
 ## Installation
 
