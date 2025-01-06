@@ -4,7 +4,7 @@
 This repository contains the code to reproduce the transfer learning (RE_TL), reinforcement learning (RE_RL), and baseline experiments (DL, LI_RL, LI_SF) published in our work 'Scaffold Hopping with Generative Reinforcement Learning'. This repository further contains two RuSH scoring plugins adapted for REINVENT3.2 (Link-INVENT) and REINVENT4, as well as standalone scripts to use our ScaffoldFinder and RuSH algorithms. 
 
 A pre-print of the publication is available at:
-![Rossen L, Sirockin F, Schneider N, Grisoni F. Scaffold Hopping with Generative Reinforcement Learning.](https://doi.org/10.26434/chemrxiv-2024-gd3j4)
+[Rossen L, Sirockin F, Schneider N, Grisoni F. Scaffold Hopping with Generative Reinforcement Learning.](https://doi.org/10.26434/chemrxiv-2024-gd3j4)
 
 ## Features
 
