@@ -135,7 +135,7 @@ Returns: ComponentResults(scores)
 | `allowance` | `float` | Allowance permits fuzzy fragment identification if <1.0. Formulated as the permitted ratio of number of atoms 
 | `output_dir` | `string` | Where results (csv) is written if write_results. |
 | `name_mols` | `bool` | If molecules should be named by ScaffoldFinder during call. Named molecules are required for processing. |
-| `name_mols` | `bool` | If results should also be written to a formatted (csv) file during call. |
+| `write_results` | `bool` | If results should also be written to a formatted (csv) file during call. |
 
 Returns: pd.DataFrame
 
