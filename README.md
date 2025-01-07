@@ -127,7 +127,7 @@ Returns: ComponentResults(scores)
 
 ## ScaffoldFinder
 
-### RuSHScore(Parameters)
+### ScaffoldFinder(Parameters)
 
 | Parameter | Type     | Description                |
 | :-------- | :------- | :------------------------- |
