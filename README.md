@@ -114,8 +114,8 @@ The parameterspace below is identical in the standalone script (RuSH.py) and REI
 | `roc_besthits` | `int` | - |
 | `score_cutoff` | `float` | - |
 | `roc_timeout` | `int` | Time limit in seconds before ROCS subroutine raises a TimeoutError. |
-| `mcquery` | `string` | Set to False if you want to fetch individual conformer hits. |
-| `nostructs` | `string` | Set to False for ROCS to also write poses to a file for visual inspection/further handling. |
+| `mcquery` | `bool` | Set to False if you want to fetch individual conformer hits. |
+| `nostructs` | `bool` | Set to False for ROCS to also write poses to a file for visual inspection/further handling. |
 | `shape_weight` | `float` | Weight to scale the Shape scoring in ROCS. |
 | `color_weight` | `float` | Weight to scale the Color scoring in ROCS. |
 | `jacc_weight` | `float` | Weight to scale the Jaccard distance scoring (as Harmonic mean). |
@@ -132,7 +132,7 @@ Returns: ComponentResults(scores)
 | Parameter | Type     | Description                |
 | :-------- | :------- | :------------------------- |
 | `reference_decorations` | `list` | List of tuples containing sets of reference decoration to identify. In the order of List[Tuple[Chem.Mol]]. |
-| `allowance` | `float` | Allowance permits fuzzy fragment identification if <1.0. Formulated as the permitted ratio of number of atoms 
+| `allowance` | `float` | Allowance permits fuzzy decoration identification if <1.0. Formulated as the permitted ratio of number of atoms in the identified decoration with respect to the reference decoration.
 | `output_dir` | `string` | Where results (csv) is written if write_results. |
 | `name_mols` | `bool` | If molecules should be named by ScaffoldFinder during call. Named molecules are required for processing. |
 | `write_results` | `bool` | If results should also be written to a formatted (csv) file during call. |
