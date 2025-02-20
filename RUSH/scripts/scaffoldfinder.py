@@ -30,11 +30,6 @@
 # Created by Luke Rossen, October 2023
 
 
-"""
-Copy of obtain_scaffold.py but to be used in line without argparse/input files, just (unnamed) rdkit mols directly as input.
-Luke Rossen, Novartis, October 2024. 
-"""
-
 import re
 import os
 import numpy as np
