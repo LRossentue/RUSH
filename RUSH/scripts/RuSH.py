@@ -24,23 +24,21 @@ class RuSHScorer:
         
         # ###### 2D parameters #########
         # in the order of [(mol, (decorations), scaffold),]
-        self.reference_smiles = parameters.get('reference_smiles', [('', ('', ''), '')])
-        # unpack and reorder.
-        self.reference_smiles, self.ref_frags, self.ref_scaffolds = list(zip(*self.reference_smiles))
-        
-        self.reference_molecules   = [Chem.MolFromSmiles(smi) for smi in self.reference_smiles]
-        self.reference_decorations = [tuple([Chem.MolFromSmiles(smi) for smi in fr]) for fr in self.ref_frags]
-        self.reference_scaffolds   = [Chem.MolFromSmiles(smi) for smi in self.ref_scaffolds]
+        self.reference_smiles      = parameters.get('reference_smiles',      [''])
+        self.reference_decorations = parameters.get('reference_decorations', [''])
+        self.reference_scaffolds   = parameters.get('reference_scaffolds',   [''])
                 
-        self.n_decorations = len(self.reference_decorations[0])
+        self.reference_molecules   = [Chem.MolFromSmiles(smi) for smi in self.reference_smiles]
+        self.reference_decorations = [tuple([Chem.MolFromSmiles(smi) for smi in decs]) for decs in self.reference_decorations]
+        self.reference_scaffolds   = [Chem.MolFromSmiles(smi) for smi in self.reference_scaffolds]
+                
         # allowance permits fuzzy decoration identification if <1.0. 
         self.allowance = parameters.get('allowance', 0.9)
         # We can partially reward a sample if some but not all decorations are included.
         self.partial_reward = parameters.get('partial_reward', 0.3)
         
         # specify where to create a temporary working directory, otherwise create it in the class' dir. 
-        self.dir = parameters.get('output_dir',
-                                       os.path.dirname(os.path.realpath(__file__)))
+        self.dir = parameters.get('output_dir', os.path.dirname(os.path.realpath(__file__)))
         # make a temporary directory for OMEGA and ROCS to operate from.
         self._create_set_temp_dir()
         

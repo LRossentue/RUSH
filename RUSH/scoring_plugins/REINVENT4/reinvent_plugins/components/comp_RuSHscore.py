@@ -20,7 +20,14 @@ class Parameters(BaseParameters):
     output_dir : List[str] =  "~/RUSH"
     # the order of these molecules should be consistent.
     database_from_smiles : List[bool] = False
-    reference_smiles : List[List[Tuple[str, Tuple[str], str]]] = field(default_factory=lambda: list(zip('', ('', ''), '')))
+    
+    # reference_smiles : List[List[Tuple[str, Tuple[str], str]]] = field(default_factory=lambda: list(zip('', ('', ''), '')))
+    
+    # references are now split into seperate lists for input clarity. 
+    reference_smiles      : List[List[str]] = field(default_factory=lambda: list('CC1CC(N)CC(c2ccncc2NC(=O)c2ccc(F)c(-c3c(F)cccc3F)n2)C1'))
+    reference_scaffolds   : List[List[str]] = field(default_factory=lambda: list('O=C(N[*])c1nc([*])c(F)cc1'))
+    reference_decorations : List[List[Tuple[str]]] = field(default_factory=lambda: list(('*c1cnccc1C1CC(C)CC(N)C1', '*c1c(F)cccc1F'))) # can be any integer number of decorations.
+    
     database_path : List[str] = "~/RUSH/data/PDB_structures/pim447.sdf"
 
     partial_reward : List[float] = 0.3
@@ -39,8 +46,8 @@ class Parameters(BaseParameters):
     roc_timeout    : List[int] = 1000
     score_cutoff   : List[float] = 0.8
     
-    mcquery        : List[float] = True
-    nostructs      : List[float] = True
+    mcquery        : List[bool] = True
+    nostructs      : List[bool] = True
 
     shape_weight   : List[float] = 1.0
     color_weight   : List[float] = 1.0
