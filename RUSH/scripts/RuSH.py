@@ -50,6 +50,11 @@ class RuSHScorer:
                                               write_results=False
                                               )
         
+        # OpenEye
+        self.openeye_installation = parameters.get('openeye_installation', "/home/lrossen/OpenEye/openeye") # example pathing
+        self.oeomega_path = os.path.join(self.openeye_installation, "bin", "oeomega")
+        self.rocs_path = os.path.join(self.openeye_installation, "bin", "rocs")
+
         # ###### 3D parameters #########          
         self.oeomega_CA   = parameters.get('oeomega_CA'  ,'classic')
         self.oeomega_rms  = parameters.get('oeomega_rms' , 0.5)
@@ -237,13 +242,18 @@ class RuSHScorer:
         
         # add whatever filters here, can also be done through reinvent with smarts patterns as a seperate comp.
         # very rarely REINVENT can generate a molecule with no atoms, so we also check for mol and atoms.
-        f_IDs, f_molecules = np.array(
+        filtered_data = np.array(
                       [(mol.GetProp("_Name"), mol) for i, mol in enumerate(molecules) if mol if \
                        mol.GetNumAtoms() > 0 if \
                        CalcNumAtomStereoCenters(mol) <= self.max_centers if \
                        CalcExactMolWt(mol)           <= self.max_molwt if \
                        CalcNumRotatableBonds(mol)    <= self.max_rotors
-                      ], dtype=object).transpose()
+                      ], dtype=object)
+        
+        if filtered_data.size > 0:
+            f_IDs, f_molecules = filtered_data.transpose()
+        else:
+            f_IDs, f_molecules = [], []
         
         print(f'{len(molecules) - len(f_molecules)} molecules filtered.')
         return np.array(f_IDs), np.array(f_molecules, dtype=object)
@@ -274,10 +284,10 @@ class RuSHScorer:
         scores = dict(zip(IDs, [0.0]*len(molecules)))        
         # additional dict for analysis. {ID:[smi, success, reward_2d, reward_3d, score],}
         detailed_scores = dict(zip(IDs, [[Chem.MolToSmiles(mol), .0, .0, .0, .0] for mol in molecules]))    
-
+        
         sdf_path = os.path.join(self.TEMP_DIR, 'query.sdf')
         oeb_path = os.path.join(self.TEMP_DIR, 'query.oeb')
-        log_path = os.path.join(self.TEMP_DIR, 'rocs.log')
+        log_path = os.path.join(self.TEMP_DIR, 'omega_rocs.log')
         rpt_file = os.path.join(self.TEMP_DIR, 'query.rpt')
         
         # prefilter for molecules that are likely to score low/give trouble with the pipeline.
@@ -308,15 +318,15 @@ class RuSHScorer:
         
         # run omega on the filtered batch.
         self._mols_to_sdf(f_molecules, sdf_path)
-        out, err, returncode = self._run_omega(sdf_path, oeb_path)
-        if returncode:
-            raise RuntimeError(f"problems running OMEGA: {err}\nOutput: {out}")
+        result = self._run_omega(sdf_path, oeb_path, log_path)
+        if result.returncode:
+            raise RuntimeError(f"problems running OMEGA: {result.stderr}\nOutput: {result.stdout}")
         
         # run rocs on the filtered batch.
-        out, err, returncode = self._run_ROCS(oeb_path, rpt_file)
-        if returncode: 
+        result = self._run_ROCS(oeb_path, rpt_file, log_path)
+        if result.returncode: 
             # print error output if rocs had issues, but don't raise any errors.
-            print(f"problems running ROCS: {err}\nOutput: {out}")
+            print(f"problems running ROCS: {result.stderr}\nOutput: {result.stderr}")
             self._print_logs(log_path)
             
         # check if rocs did produce a report file. Some molecules may still have succeeded.
@@ -409,8 +419,12 @@ class RuSHScorer:
         
     
     def _print_logs(self, log_path):
-        with open(log_path, 'r') as f:
-            lines = f.readlines()
+        lines = None
+        if os.path.isfile(log_path):
+            with open(log_path, 'r') as f:
+                lines = f.readlines()
+        else:         
+            print(f'Tried to read "{log_path}", but does not exist.')
         if lines: [print(line) for line in lines]
             
         
@@ -418,27 +432,71 @@ class RuSHScorer:
         for file_path in files:
             if os.path.isfile(file_path): os.remove(file_path)
             
-            
-    def _run_omega(self, input_file: str, output_file: str):
+
+    def _run_omega(self, input_file: str, output_file: str, log_path: str):
+        # refactored. now executes using full path to oeomega.
         # see https://docs.eyesopen.com/applications/omega/omega/omega_opt_params.html
-        commands = [
-            "source  ~/anaconda3/etc/profile.d/conda.sh;",
-            "conda activate oepython;", # default OE venv setup. See documentation for installation and licensing. 
-            ' '.join([
-                    'oeomega', self.oeomega_CA, '-canonOrder', 'false', 
-                    '-in', input_file, '-out', output_file,
-                    '-maxconfs', str(self.n_conformers), 
-                    '-rms', str(self.oeomega_rms), # see OMEGA documentation
-                    # '-maxrot', str(self.max_rotors), # inconsistent with RDkit (counts amides)
-                    '-flipper', 'true', '-flipper_warts', 'false', # *
-                    '-flipper_maxcenters', str(self.max_centers),  # **
-                    '-verbose', 'true', '-useGPU', 'false'])
-        ]           # gpu disabled for now due to torch memory allocation conflict.
-        # * flipper set to true because generated samples are stereo-invariant (greedy score)
-        # ** in case any pass the max_center filter, do random flipping instead (should not happen).
-        return self._run_cmd(commands)
+        cmd = (
+            # f"/usr/bin/time -v " # job control issues with SLURM if we try to monitor the time.
+            f"{self.oeomega_path} {self.oeomega_CA} "
+            f"-canonOrder false "
+            f"-in {input_file} "
+            f"-out {output_file} "
+            f"-maxconfs {self.n_conformers} "
+            f"-rms {self.oeomega_rms} "
+            f"-useGPU true "
+            f"-flipper true " # *
+            f"-flipper_warts false "
+            f"-flipper_maxcenters {self.max_centers} " # **
+            f"-verbose true "
+        )
+        # * flipper set to true because generated samples are often stereo-invariant (ChEMBL).
+        # ** do random flipping if a molecule contains too many unspecified centers to limit runtime.
+        with open(log_path, 'w') as f:
+            return subprocess.run(
+                cmd, 
+                shell=True, 
+                check=True, 
+                stderr=f,
+                stdout=f,
+                executable='/bin/bash',
+                text=True,
+            )
+    
+    def _run_ROCS(self, query_file: str, report_file: str, log_path: str):
+        # refactored. now executes using full path to rocs.
+        cmd = (
+            # f"/usr/bin/time -v " # job control issues with SLURM if we try to monitor the time.
+            f"{self.rocs_path} "
+            f"-dbase {query_file} " # switched! 
+            f"-query {self.DB_OEB_PATH} "
+            f"-mcquery {str(self.mcquery).lower()} "
+            f"-besthits {self.roc_besthits} "
+            f"-rankby TanimotoCombo "
+            f"-cutoff {self.score_cutoff} " # only report mols with reasonable combined scores.
+            f"-nostructs {str(self.nostructs).lower()} " # dont report structures
+            f"-report one " # output everything to one report file
+            f"-status none " # dont report status
+            f"-stats best " # only report the best overlays for each isomer pair. 
+            f"-reportfile {report_file} "
+            f"-mpi_np {self.num_cores} " # could use work, because no config is passed for mp.
+            f"-qconflabel none " # all confs of a mol have the same name. 
+            f"-conflabel none "
+            f"-maxconfs {self.roc_maxconfs} "
+        )
 
-
+        with open(log_path, 'w') as f:
+            return subprocess.run(
+                cmd, 
+                shell=True, 
+                check=True, 
+                stderr=f,
+                stdout=f,
+                executable='/bin/bash',
+                text=True,
+                timeout=self.roc_timeout,
+            )
+    
     def _read_report_rewards(self, report_file):
         # for old rocs implementation, name_col = 'ShapeQuery', for 2024 implementation name_col = 'Name'
         report_has_content, rewards_3d = False, []
@@ -456,46 +514,6 @@ class RuSHScorer:
             rewards_3d = self._score_method(report.groupby(self.rocs_groupby).score)
         
         return report_has_content, rewards_3d
-
-
-    def _run_ROCS(self, query_file, report_file):
-        commands = [
-            "source  ~/anaconda3/etc/profile.d/conda.sh;",
-            "conda activate oepython;", # default OE venv setup. See documentation for installation and licensing. 
-            ' '.join([
-                     'rocs',
-                     '-dbase', query_file, # switched! 
-                     '-query', self.DB_OEB_PATH,  '-mcquery', str(self.mcquery).lower(),
-                    '-besthits', str(self.roc_besthits), 
-                     '-rankby', 'TanimotoCombo',
-                     '-cutoff', str(self.score_cutoff), # only report mols with reasonable combined scores.
-                     '-nostructs', str(self.nostructs).lower(),      # dont report structures
-                     '-report', 'one',  # output everything to one report file
-                     '-status', 'none', # dont report status
-                     '-stats', 'best',  # only report the best overlays for each isomer pair. 
-                     '-reportfile', report_file,
-                     '-mpi_np', str(self.num_cores), # could use work, because no config is passed for mp.
-                     '-qconflabel', 'none', '-conflabel', 'none', # all confs of a mol have the same name. 
-                     '-maxconfs', str(self.roc_maxconfs)]) # subrocs removed
-        ]
-        
-        return self._run_cmd(commands, timeout=self.roc_timeout)
-    
-    
-    def _run_cmd(self, commands: List[str], timeout=20_000):
-        """ 
-        Run a named command in a subprocess. 
-        Pass timeout to prevent extremely long epochs or deadlocks (will terminate the run!). 
-        """
-        process = Popen("/bin/bash", shell=True, universal_newlines=True,
-                        stdin=PIPE, stdout=PIPE, stderr=PIPE, encoding='utf8')      
-
-        out, err = process.communicate(''.join([f'{cmd}\n' for cmd in commands]), timeout=timeout) 
-        returncode = process.returncode
-        
-        process.kill()
-        return out, err, returncode
-    
     
     def _neutralize_atoms(self, mol):
         # obtained from http://www.rdkit.org/docs/Cookbook.html#neutralizing-charged-molecules

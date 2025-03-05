@@ -111,9 +111,9 @@ class ScaffoldFinder():
             # try to cleave the relevant bonds and obtain a valid scaffold molecule.
             scaffold_success, scaffold = self._cleave_bonds(mol, bonds_to_cleave, anchors)
             # store the relevant indices of atoms belonging to mol, decorations (all), and scaffold for 3D scoring.
-            indices_dict = {"mol"      :  mol_indices,
+            indices_dict = {"mol"        : mol_indices,
                             # we do not include anchors in the decoration
-                            "decorations":  set(decoration_indices) - set([a.GetIdx() for a in anchors]),
+                            "decorations": set(decoration_indices) - set([a.GetIdx() for a in anchors]),
                             # we do include the anchors in the scaffold
                             "scaffold"   : (set(mol_indices) - set(decoration_indices)) | set([a.GetIdx() for a in anchors]),
                            }
