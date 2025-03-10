@@ -70,6 +70,7 @@ class RuSHScorer:
         self.roc_maxconfs = parameters.get('roc_maxconfs', 100) # changed from 1 in 2024
         self.roc_besthits = parameters.get('roc_besthits', 500) # changed from 1 in 2024
         self.roc_timeout  = parameters.get('roc_timeout' , 1000)
+        self.roc_retries  = parameters.get('roc_retries' , 3) 
         
         self.mcquery      = parameters.get('mcquery'     , True) 
         self.nostructs    = parameters.get('nostructs'   , True)
@@ -324,7 +325,7 @@ class RuSHScorer:
         
         # run rocs on the filtered batch.
         result = self._run_ROCS(oeb_path, rpt_file, log_path)
-        if result.returncode: 
+        if result is None or result.returncode: 
             # print error output if rocs had issues, but don't raise any errors.
             print(f"problems running ROCS: {result.stderr}\nOutput: {result.stderr}")
             self._print_logs(log_path)
@@ -479,24 +480,32 @@ class RuSHScorer:
             f"-status none " # dont report status
             f"-stats best " # only report the best overlays for each isomer pair. 
             f"-reportfile {report_file} "
-            f"-mpi_np {self.num_cores} " # could use work, because no config is passed for mp.
+            # f"-mpi_np {self.num_cores} " # commenting out mpi due to confict with SLURM.
             f"-qconflabel none " # all confs of a mol have the same name. 
             f"-conflabel none "
             f"-maxconfs {self.roc_maxconfs} "
         )
 
-        with open(log_path, 'w') as f:
-            return subprocess.run(
-                cmd, 
-                shell=True, 
-                check=True, 
-                stderr=f,
-                stdout=f,
-                executable='/bin/bash',
-                text=True,
-                timeout=self.roc_timeout,
-            )
-    
+        attempts = 0
+        with open(log_path, 'a') as f:
+            while attempts < self.roc_retries:
+                try:
+                    return subprocess.run(
+                        cmd, 
+                        shell=True, 
+                        check=True, 
+                        stderr=f,
+                        stdout=f,
+                        executable='/bin/bash',
+                        text=True,
+                        timeout=self.roc_timeout,
+                    )
+                except subprocess.CalledProcessError as e:
+                    attempts += 1
+                    f.write(f"ROCS subprocess failed (attempt {attempts}/{self.roc_retries}): {e}")
+                    time.sleep(5)
+        return 
+                
     def _read_report_rewards(self, report_file):
         # for old rocs implementation, name_col = 'ShapeQuery', for 2024 implementation name_col = 'Name'
         report_has_content, rewards_3d = False, []
